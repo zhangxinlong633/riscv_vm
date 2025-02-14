@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include "cpu.h"
 
+/* https://five-embeddev.com/riscv-user-isa-manual/Priv-v1.12/instr-table.html */
 
 #define ANSI_YELLOW  "\x1b[33m"
 #define ANSI_BLUE    "\x1b[31m"
@@ -10,23 +11,27 @@
 
 #define ADDR_MISALIGNED(addr) (addr & 0x3)
 
-uint64_t load8(DRAM* dram, uint64_t addr) {
+uint64_t load8(DRAM* dram, uint64_t addr) 
+{
 	return (uint64_t) dram->mem[addr - DRAM_BASE];
 }
 
-uint64_t load16(DRAM* dram, uint64_t addr) {
+uint64_t load16(DRAM* dram, uint64_t addr) 
+{
 	return (uint64_t) dram->mem[addr - DRAM_BASE]
 		| ((uint64_t) dram->mem[addr - DRAM_BASE + 1] << 8);
 }
 
-uint64_t load32(DRAM* dram, uint64_t addr) {
+uint64_t load32(DRAM* dram, uint64_t addr) 
+{
 	return (uint64_t) dram->mem[addr - DRAM_BASE]
 		| ((uint64_t) dram->mem[addr - DRAM_BASE + 1] << 8)
 		| ((uint64_t) dram->mem[addr - DRAM_BASE + 2] << 16)
 		| ((uint64_t) dram->mem[addr - DRAM_BASE + 3] << 24);
 }
 
-uint64_t load64(DRAM* dram, uint64_t addr) {
+uint64_t load64(DRAM* dram, uint64_t addr) 
+{
 	return (uint64_t) dram->mem[addr - DRAM_BASE]
 		| ((uint64_t) dram->mem[addr - DRAM_BASE + 1] << 8)
 		| ((uint64_t) dram->mem[addr - DRAM_BASE + 2] << 16)
@@ -37,7 +42,8 @@ uint64_t load64(DRAM* dram, uint64_t addr) {
 		| ((uint64_t) dram->mem[addr - DRAM_BASE + 7] << 56);
 }
 
-uint64_t load(DRAM* dram, uint64_t addr, uint64_t size) {
+uint64_t load(DRAM* dram, uint64_t addr, uint64_t size) 
+{
 	switch (size) {
 		case 8:  return load8(dram, addr);
 		case 16: return load16(dram, addr);
@@ -47,23 +53,27 @@ uint64_t load(DRAM* dram, uint64_t addr, uint64_t size) {
 	}
 }
 
-void store8(DRAM* dram, uint64_t addr, uint64_t value) {
+void store8(DRAM* dram, uint64_t addr, uint64_t value) 
+{
 	dram->mem[addr - DRAM_BASE] = (uint8_t) (value & 0xff);
 }
 
-void store16(DRAM* dram, uint64_t addr, uint64_t value) {
+void store16(DRAM* dram, uint64_t addr, uint64_t value) 
+{
 	dram->mem[addr - DRAM_BASE] = (uint8_t) (value & 0xff);
 	dram->mem[addr - DRAM_BASE + 1] = (uint8_t) ((value >> 8) & 0xff);
 }
 
-void store32(DRAM* dram, uint64_t addr, uint64_t value) {
+void store32(DRAM* dram, uint64_t addr, uint64_t value) 
+{
 	dram->mem[addr - DRAM_BASE] = (uint8_t) (value & 0xff);
 	dram->mem[addr - DRAM_BASE + 1] = (uint8_t) ((value >> 8) & 0xff);
 	dram->mem[addr - DRAM_BASE + 2] = (uint8_t) ((value >> 16) & 0xff);
 	dram->mem[addr - DRAM_BASE + 3] = (uint8_t) ((value >> 24) & 0xff);
 }
 
-void store64(DRAM* dram, uint64_t addr, uint64_t value) {
+void store64(DRAM* dram, uint64_t addr, uint64_t value) 
+{
 	dram->mem[addr - DRAM_BASE] = (uint8_t) (value & 0xff);
 	dram->mem[addr - DRAM_BASE + 1] = (uint8_t) ((value >> 8) & 0xff);
 	dram->mem[addr - DRAM_BASE + 2] = (uint8_t) ((value >> 16) & 0xff);
@@ -74,7 +84,8 @@ void store64(DRAM* dram, uint64_t addr, uint64_t value) {
 	dram->mem[addr - DRAM_BASE + 7] = (uint8_t) ((value >> 56) & 0xff);
 }
 
-void store(DRAM* dram, uint64_t addr, uint64_t size, uint64_t value) {
+void store(DRAM* dram, uint64_t addr, uint64_t size, uint64_t value) 
+{
 	switch (size) {
 		case 8:  store8(dram, addr, value); break;
 		case 16: store16(dram, addr, value); break;
@@ -85,665 +96,47 @@ void store(DRAM* dram, uint64_t addr, uint64_t size, uint64_t value) {
 }
 
 // Print operation for DEBUG
-void print_op(const char* s) {
+void print_op(const char* s) 
+{
 	printf("%s%s%s", ANSI_BLUE, s, ANSI_RESET);
 }
 
-void cpu_init(CPU *cpu) {
+void cpu_init(CPU *cpu) 
+{
 	cpu->regs[0] = 0x00; // Register x0 hardwired to 0
 	cpu->regs[2] = DRAM_BASE + DRAM_SIZE; // Set stack pointer
 	cpu->pc = DRAM_BASE; // Set program counter to the base address
 }
 
-uint32_t cpu_fetch(CPU *cpu) {
+uint32_t cpu_fetch(CPU *cpu) 
+{
 	return bus_load(&(cpu->bus), cpu->pc, 32);
 }
 
-uint64_t load_cpu(CPU* cpu, uint64_t addr, uint64_t size) {
+uint64_t load_cpu(CPU* cpu, uint64_t addr, uint64_t size) 
+{
 	return bus_load(&(cpu->bus), addr, size);
 }
 
-void store_cpu(CPU* cpu, uint64_t addr, uint64_t size, uint64_t value) {
+void store_cpu(CPU* cpu, uint64_t addr, uint64_t size, uint64_t value) 
+{
 	bus_store(&(cpu->bus), addr, size, value);
 }
 
 // Instruction Decoder Functions
-uint64_t get_rd(uint32_t inst) {
+uint64_t get_rd(uint32_t inst) 
+{
 	return (inst >> 7) & 0x1f; // rd in bits 11..7
 }
-uint64_t get_rs1(uint32_t inst) {
+
+uint64_t get_rs1(uint32_t inst) 
+{
 	return (inst >> 15) & 0x1f; // rs1 in bits 19..15
 }
-uint64_t get_rs2(uint32_t inst) {
+
+uint64_t get_rs2(uint32_t inst) 
+{
 	return (inst >> 20) & 0x1f; // rs2 in bits 24..20
-}
-
-uint64_t get_imm_I(uint32_t inst) {
-	return ((int64_t)(int32_t)(inst & 0xfff00000)) >> 20; // Signed immediate
-}
-uint64_t get_imm_S(uint32_t inst) {
-	return ((int64_t)(int32_t)(inst & 0xfe000000) >> 20)
-		| ((inst >> 7) & 0x1f);
-}
-uint64_t get_imm_B(uint32_t inst) {
-	return ((int64_t)(int32_t)(inst & 0x80000000) >> 19)
-		| ((inst & 0x80) << 4) // imm[11]
-		| ((inst >> 20) & 0x7e0) // imm[10:5]
-		| ((inst >> 7) & 0x1e); // imm[4:1]
-}
-
-uint64_t get_imm_U(uint32_t inst) {
-	return (int64_t)(int32_t)(inst & 0xfffff000); // Upper immediate
-}
-
-uint64_t get_imm_J(uint32_t inst) {
-	return (uint64_t)((int64_t)(int32_t)(inst & 0x80000000) >> 11)
-		| (inst & 0xff000) // imm[19:12]
-		| ((inst >> 9) & 0x800) // imm[11]
-		| ((inst >> 20) & 0x7fe); // imm[10:1]
-}
-
-uint32_t get_shamt(uint32_t inst) {
-	return (uint32_t)(get_imm_I(inst) & 0x1f); // Shift amount
-}
-
-uint64_t get_csr(uint32_t inst) {
-	return ((inst & 0xfff00000) >> 20); // CSR
-}
-
-// Instruction Execution Functions
-void exec_LUI(CPU* cpu, uint32_t inst) {
-	cpu->regs[get_rd(inst)] = (uint64_t)(int64_t)(int32_t)(inst & 0xfffff000);
-	print_op("lui\n");
-}
-
-void exec_AUIPC(CPU* cpu, uint32_t inst) {
-	uint64_t imm = get_imm_U(inst);
-	cpu->regs[get_rd(inst)] = ((int64_t) cpu->pc + (int64_t) imm) - 4;
-	print_op("auipc\n");
-}
-
-void exec_JAL(CPU* cpu, uint32_t inst) {
-	uint64_t imm = get_imm_J(inst);
-	cpu->regs[get_rd(inst)] = cpu->pc;
-	cpu->pc = cpu->pc + (int64_t) imm - 4;
-	print_op("jal\n");
-	if (ADDR_MISALIGNED(cpu->pc)) {
-		fprintf(stderr, "JAL pc address misaligned");
-		exit(0);
-	}
-}
-void exec_JALR(CPU* cpu, uint32_t inst) {
-    uint64_t imm = get_imm_I(inst);
-    uint64_t tmp = cpu->pc;
-    cpu->pc = (cpu->regs[get_rs1(inst)] + (int64_t) imm) & 0xfffffffe;
-    cpu->regs[get_rd(inst)] = tmp;
-    /*print_op("NEXT -> %#lx, imm:%#lx\n", cpu->pc, imm);*/
-    print_op("jalr\n");
-    if (ADDR_MISALIGNED(cpu->pc)) {
-        fprintf(stderr, "JAL pc address misalligned");
-        exit(0);
-    }
-}
-
-
-void exec_BEQ(CPU* cpu, uint32_t inst) {
-	uint64_t imm = get_imm_B(inst);
-	if ((int64_t) cpu->regs[get_rs1(inst)] == (int64_t) cpu->regs[get_rs2(inst)])
-		cpu->pc = cpu->pc + (int64_t) imm - 4;
-	print_op("beq\n");
-}
-void exec_BNE(CPU* cpu, uint32_t inst) {
-    uint64_t imm = get_imm_B(inst);
-    if ((int64_t) cpu->regs[get_rs1(inst)] != (int64_t) cpu->regs[get_rs2(inst)])
-        cpu->pc = (cpu->pc + (int64_t) imm - 4);
-    print_op("bne\n");
-}
-void exec_BLT(CPU* cpu, uint32_t inst) {
-    /*print_op("Operation: BLT\n");*/
-    uint64_t imm = get_imm_B(inst);
-    if ((int64_t) cpu->regs[get_rs1(inst)] < (int64_t) cpu->regs[get_rs2(inst)])
-        cpu->pc = cpu->pc + (int64_t) imm - 4;
-    print_op("blt\n");
-}
-void exec_BGE(CPU* cpu, uint32_t inst) {
-    uint64_t imm = get_imm_B(inst);
-    if ((int64_t) cpu->regs[get_rs1(inst)] >= (int64_t) cpu->regs[get_rs2(inst)])
-        cpu->pc = cpu->pc + (int64_t) imm - 4;
-    print_op("bge\n");
-}
-void exec_BLTU(CPU* cpu, uint32_t inst) {
-    uint64_t imm = get_imm_B(inst);
-    if (cpu->regs[get_rs1(inst)] < cpu->regs[get_rs2(inst)])
-        cpu->pc = cpu->pc + (int64_t) imm - 4;
-    print_op("bltu\n");
-}
-void exec_BGEU(CPU* cpu, uint32_t inst) {
-    uint64_t imm = get_imm_B(inst);
-    if (cpu->regs[get_rs1(inst)] >= cpu->regs[get_rs2(inst)])
-        cpu->pc = (int64_t) cpu->pc + (int64_t) imm - 4;
-    print_op("jal\n");
-}
-void exec_LB(CPU* cpu, uint32_t inst) {
-    // load 1 byte to rd from address in rs1
-    uint64_t imm = get_imm_I(inst);
-    uint64_t addr = cpu->regs[get_rs1(inst)] + (int64_t) imm;
-    cpu->regs[get_rd(inst)] = (int64_t)(int8_t) load_cpu(cpu, addr, 8);
-    print_op("lb\n");
-}
-void exec_LH(CPU* cpu, uint32_t inst) {
-    // load 2 byte to rd from address in rs1
-    uint64_t imm = get_imm_I(inst);
-    uint64_t addr = cpu->regs[get_rs1(inst)] + (int64_t) imm;
-    cpu->regs[get_rd(inst)] = (int64_t)(int16_t) load_cpu(cpu, addr, 16);
-    print_op("lh\n");
-}
-void exec_LW(CPU* cpu, uint32_t inst) {
-    // load 4 byte to rd from address in rs1
-    uint64_t imm = get_imm_I(inst);
-    uint64_t addr = cpu->regs[get_rs1(inst)] + (int64_t) imm;
-    cpu->regs[get_rd(inst)] = (int64_t)(int32_t) load_cpu(cpu, addr, 32);
-    print_op("lw\n");
-}
-void exec_LD(CPU* cpu, uint32_t inst) {
-    // load 8 byte to rd from address in rs1
-    uint64_t imm = get_imm_I(inst);
-    uint64_t addr = cpu->regs[get_rs1(inst)] + (int64_t) imm;
-    cpu->regs[get_rd(inst)] = (int64_t) load_cpu(cpu, addr, 64);
-    print_op("ld\n");
-}
-void exec_LBU(CPU* cpu, uint32_t inst) {
-    // load unsigned 1 byte to rd from address in rs1
-    uint64_t imm = get_imm_I(inst);
-    uint64_t addr = cpu->regs[get_rs1(inst)] + (int64_t) imm;
-    cpu->regs[get_rd(inst)] = load_cpu(cpu, addr, 8);
-    print_op("lbu\n");
-}
-void exec_LHU(CPU* cpu, uint32_t inst) {
-    // load unsigned 2 byte to rd from address in rs1
-    uint64_t imm = get_imm_I(inst);
-    uint64_t addr = cpu->regs[get_rs1(inst)] + (int64_t) imm;
-    cpu->regs[get_rd(inst)] = load_cpu(cpu, addr, 16);
-    print_op("lhu\n");
-}
-void exec_LWU(CPU* cpu, uint32_t inst) {
-    // load unsigned 2 byte to rd from address in rs1
-    uint64_t imm = get_imm_I(inst);
-    uint64_t addr = cpu->regs[get_rs1(inst)] + (int64_t) imm;
-    cpu->regs[get_rd(inst)] = load_cpu(cpu, addr, 32);
-    print_op("lwu\n");
-}
-void exec_SB(CPU* cpu, uint32_t inst) {
-    uint64_t imm =get_imm_S(inst);
-    uint64_t addr = cpu->regs[get_rs1(inst)] + (int64_t) imm;
-    store_cpu(cpu, addr, 8, cpu->regs[get_rs2(inst)]);
-    print_op("sb\n");
-}
-void exec_SH(CPU* cpu, uint32_t inst) {
-    uint64_t imm =get_imm_S(inst);
-    uint64_t addr = cpu->regs[get_rs1(inst)] + (int64_t) imm;
-    store_cpu(cpu, addr, 16, cpu->regs[get_rs2(inst)]);
-    print_op("sh\n");
-}
-void exec_SW(CPU* cpu, uint32_t inst) {
-    uint64_t imm =get_imm_S(inst);
-    uint64_t addr = cpu->regs[get_rs1(inst)] + (int64_t) imm;
-    store_cpu(cpu, addr, 32, cpu->regs[get_rs2(inst)]);
-    print_op("sw\n");
-}
-void exec_SD(CPU* cpu, uint32_t inst) {
-    uint64_t imm =get_imm_S(inst);
-    uint64_t addr = cpu->regs[get_rs1(inst)] + (int64_t) imm;
-    store_cpu(cpu, addr, 64, cpu->regs[get_rs2(inst)]);
-    print_op("sd\n");
-}
-
-void exec_ADDI(CPU* cpu, uint32_t inst) {
-    uint64_t imm = get_imm_I(inst);
-    cpu->regs[get_rd(inst)] = cpu->regs[get_rs1(inst)] + (int64_t) imm;
-    print_op("addi\n");
-}
-
-void exec_SLLI(CPU* cpu, uint32_t inst) {
-    cpu->regs[get_rd(inst)] = cpu->regs[get_rs1(inst)] << get_shamt(inst);
-    print_op("slli\n");
-}
-
-void exec_SLTI(CPU* cpu, uint32_t inst) {
-    uint64_t imm = get_imm_I(inst);
-    cpu->regs[get_rd(inst)] = (cpu->regs[get_rs1(inst)] < (int64_t) imm)?1:0;
-    print_op("slti\n");
-}
-
-void exec_SLTIU(CPU* cpu, uint32_t inst) {
-    uint64_t imm = get_imm_I(inst);
-    cpu->regs[get_rd(inst)] = (cpu->regs[get_rs1(inst)] < imm)?1:0;
-    print_op("sltiu\n");
-}
-
-void exec_XORI(CPU* cpu, uint32_t inst) {
-    uint64_t imm = get_imm_I(inst);
-    cpu->regs[get_rd(inst)] = cpu->regs[get_rs1(inst)] ^ imm;
-    print_op("xori\n");
-}
-
-void exec_SRLI(CPU* cpu, uint32_t inst) {
-    uint64_t imm = get_imm_I(inst);
-    cpu->regs[get_rd(inst)] = cpu->regs[get_rs1(inst)] >> imm;
-    print_op("srli\n");
-}
-
-void exec_SRAI(CPU* cpu, uint32_t inst) {
-    uint64_t imm = get_imm_I(inst);
-    cpu->regs[get_rd(inst)] = (int32_t)cpu->regs[get_rs1(inst)] >> imm;
-    print_op("srai\n");
-}
-
-void exec_ORI(CPU* cpu, uint32_t inst) {
-    uint64_t imm = get_imm_I(inst);
-    cpu->regs[get_rd(inst)] = cpu->regs[get_rs1(inst)] | imm;
-    print_op("ori\n");
-}
-
-void exec_ANDI(CPU* cpu, uint32_t inst) {
-    uint64_t imm = get_imm_I(inst);
-    cpu->regs[get_rd(inst)] = cpu->regs[get_rs1(inst)] & imm;
-    print_op("andi\n");
-}
-
-void exec_ADD(CPU* cpu, uint32_t inst) {
-    cpu->regs[get_rd(inst)] =
-        (uint64_t) ((int64_t)cpu->regs[get_rs1(inst)] + (int64_t)cpu->regs[get_rs2(inst)]);
-    print_op("add\n");
-}
-
-void exec_SUB(CPU* cpu, uint32_t inst) {
-    cpu->regs[get_rd(inst)] =
-        (uint64_t) ((int64_t)cpu->regs[get_rs1(inst)] - (int64_t)cpu->regs[get_rs2(inst)]);
-    print_op("sub\n");
-}
-
-void exec_SLL(CPU* cpu, uint32_t inst) {
-    cpu->regs[get_rd(inst)] = cpu->regs[get_rs1(inst)] << (int64_t)cpu->regs[get_rs2(inst)];
-    print_op("sll\n");
-}
-
-void exec_SLT(CPU* cpu, uint32_t inst) {
-    cpu->regs[get_rd(inst)] = (cpu->regs[get_rs1(inst)] < (int64_t) cpu->regs[get_rs2(inst)])?1:0;
-    print_op("slt\n");
-}
-
-void exec_SLTU(CPU* cpu, uint32_t inst) {
-    cpu->regs[get_rd(inst)] = (cpu->regs[get_rs1(inst)] < cpu->regs[get_rs2(inst)])?1:0;
-    print_op("slti\n");
-}
-
-void exec_XOR(CPU* cpu, uint32_t inst) {
-    cpu->regs[get_rd(inst)] = cpu->regs[get_rs1(inst)] ^ cpu->regs[get_rs2(inst)];
-    print_op("xor\n");
-}
-
-void exec_SRL(CPU* cpu, uint32_t inst) {
-    cpu->regs[get_rd(inst)] = cpu->regs[get_rs1(inst)] >> cpu->regs[get_rs2(inst)];
-    print_op("srl\n");
-}
-
-void exec_SRA(CPU* cpu, uint32_t inst) {
-    cpu->regs[get_rd(inst)] = (int32_t)cpu->regs[get_rs1(inst)] >> 
-        (int64_t) cpu->regs[get_rs2(inst)];
-    print_op("sra\n");
-}
-
-void exec_OR(CPU* cpu, uint32_t inst) {
-    cpu->regs[get_rd(inst)] = cpu->regs[get_rs1(inst)] | cpu->regs[get_rs2(inst)];
-    print_op("or\n");
-}
-
-void exec_AND(CPU* cpu, uint32_t inst) {
-    cpu->regs[get_rd(inst)] = cpu->regs[get_rs1(inst)] & cpu->regs[get_rs2(inst)];
-    print_op("and\n");
-}
-
-void exec_FENCE(CPU* cpu, uint32_t inst) {
-    print_op("fence\n");
-}
-
-void exec_ECALL(CPU* cpu, uint32_t inst) {}
-void exec_EBREAK(CPU* cpu, uint32_t inst) {}
-
-void exec_ECALLBREAK(CPU* cpu, uint32_t inst) {
-    if (get_imm_I(inst) == 0x0)
-        exec_ECALL(cpu, inst);
-    if (get_imm_I(inst) == 0x1)
-        exec_EBREAK(cpu, inst);
-    print_op("ecallbreak\n");
-}
-
-
-void exec_ADDIW(CPU* cpu, uint32_t inst) {
-    uint64_t imm = get_imm_I(inst);
-    cpu->regs[get_rd(inst)] = cpu->regs[get_rs1(inst)] + (int64_t) imm;
-    print_op("addiw\n");
-}
-
-// TODO
-void exec_SLLIW(CPU* cpu, uint32_t inst) {
-    cpu->regs[get_rd(inst)] = (int64_t)(int32_t) (cpu->regs[get_rs1(inst)] <<  get_shamt(inst));
-    print_op("slliw\n");
-}
-void exec_SRLIW(CPU* cpu, uint32_t inst) {
-    cpu->regs[get_rd(inst)] = (int64_t)(int32_t) (cpu->regs[get_rs1(inst)] >>  get_shamt(inst));
-    print_op("srliw\n");
-}
-void exec_SRAIW(CPU* cpu, uint32_t inst) {
-    uint64_t imm = get_imm_I(inst);
-    cpu->regs[get_rd(inst)] = (int64_t)(int32_t) (cpu->regs[get_rs1(inst)] >> (uint64_t)(int64_t)(int32_t) imm);
-    print_op("sraiw\n");
-}
-void exec_ADDW(CPU* cpu, uint32_t inst) {
-    cpu->regs[get_rd(inst)] = (int64_t)(int32_t) (cpu->regs[get_rs1(inst)] 
-            + (int64_t) cpu->regs[get_rs2(inst)]);
-    print_op("addw\n");
-}
-void exec_MULW(CPU* cpu, uint32_t inst) {
-    cpu->regs[get_rd(inst)] = (int64_t)(int32_t) (cpu->regs[get_rs1(inst)] 
-            * (int64_t) cpu->regs[get_rs2(inst)]);
-    print_op("mulw\n");
-}
-void exec_SUBW(CPU* cpu, uint32_t inst) {
-    cpu->regs[get_rd(inst)] = (int64_t)(int32_t) (cpu->regs[get_rs1(inst)] 
-            - (int64_t) cpu->regs[get_rs2(inst)]);
-    print_op("subw\n");
-}
-void exec_DIVW(CPU* cpu, uint32_t inst) {
-    cpu->regs[get_rd(inst)] = (int64_t)(int32_t) (cpu->regs[get_rs1(inst)] 
-            / (int64_t) cpu->regs[get_rs2(inst)]);
-    print_op("divw\n");
-}
-void exec_SLLW(CPU* cpu, uint32_t inst) {
-    cpu->regs[get_rd(inst)] = (int64_t)(int32_t) (cpu->regs[get_rs1(inst)] <<  cpu->regs[get_rs2(inst)]);
-    print_op("sllw\n");
-}
-void exec_SRLW(CPU* cpu, uint32_t inst) {
-    cpu->regs[get_rd(inst)] = (int64_t)(int32_t) (cpu->regs[get_rs1(inst)] >>  cpu->regs[get_rs2(inst)]);
-    print_op("srlw\n");
-}
-void exec_DIVUW(CPU* cpu, uint32_t inst) {
-    cpu->regs[get_rd(inst)] = cpu->regs[get_rs1(inst)] / (int64_t) cpu->regs[get_rs2(inst)];
-    print_op("divuw\n");
-}
-void exec_SRAW(CPU* cpu, uint32_t inst) {
-    cpu->regs[get_rd(inst)] = (int64_t)(int32_t) (cpu->regs[get_rs1(inst)] >>  (uint64_t)(int64_t)(int32_t) cpu->regs[get_rs2(inst)]);
-    print_op("sraw\n");
-}
-void exec_REMW(CPU* cpu, uint32_t inst) {
-    cpu->regs[get_rd(inst)] = (int64_t)(int32_t) (cpu->regs[get_rs1(inst)] 
-            % (int64_t) cpu->regs[get_rs2(inst)]);
-    print_op("remw\n");
-}
-void exec_REMUW(CPU* cpu, uint32_t inst) {
-    cpu->regs[get_rd(inst)] = cpu->regs[get_rs1(inst)] % (int64_t) cpu->regs[get_rs2(inst)];
-    print_op("remuw\n");
-}
-
-// CSR instructions
-void exec_CSRRW(CPU* cpu, uint32_t inst) {
-    cpu->regs[get_rd(inst)] = csr_read(cpu, get_csr(inst));
-    csr_write(cpu, get_csr(inst), cpu->regs[get_rs1(inst)]);
-    print_op("csrrw\n");
-}
-void exec_CSRRS(CPU* cpu, uint32_t inst) {
-    csr_write(cpu, get_csr(inst), cpu->csr[get_csr(inst)] | cpu->regs[get_rs1(inst)]);
-    print_op("csrrs\n");
-}
-void exec_CSRRC(CPU* cpu, uint32_t inst) {
-    csr_write(cpu, get_csr(inst), cpu->csr[get_csr(inst)] & !(cpu->regs[get_rs1(inst)]) );
-    print_op("csrrc\n");
-}
-void exec_CSRRWI(CPU* cpu, uint32_t inst) {
-    csr_write(cpu, get_csr(inst), get_rs1(inst));
-    print_op("csrrwi\n");
-}
-void exec_CSRRSI(CPU* cpu, uint32_t inst) {
-    csr_write(cpu, get_csr(inst), cpu->csr[get_csr(inst)] | get_rs1(inst));
-    print_op("csrrsi\n");
-}
-void exec_CSRRCI(CPU* cpu, uint32_t inst) {
-    csr_write(cpu, get_csr(inst), cpu->csr[get_csr(inst)] & !get_rs1(inst));
-    print_op("csrrci\n");
-}
-
-// AMO_W
-void exec_LR_W(CPU* cpu, uint32_t inst) {}  
-void exec_SC_W(CPU* cpu, uint32_t inst) {}  
-void exec_AMOSWAP_W(CPU* cpu, uint32_t inst) {}  
-void exec_AMOADD_W(CPU* cpu, uint32_t inst) {
-    uint32_t tmp = load_cpu(cpu, cpu->regs[get_rs1(inst)], 32);
-    uint32_t res = tmp + (uint32_t)cpu->regs[get_rs2(inst)];
-    cpu->regs[get_rd(inst)] = tmp;
-    store_cpu(cpu, cpu->regs[get_rs1(inst)], 32, res);
-    print_op("amoadd.w\n");
-} 
-void exec_AMOXOR_W(CPU* cpu, uint32_t inst) {
-    uint32_t tmp = load_cpu(cpu, cpu->regs[get_rs1(inst)], 32);
-    uint32_t res = tmp ^ (uint32_t)cpu->regs[get_rs2(inst)];
-    cpu->regs[get_rd(inst)] = tmp;
-    store_cpu(cpu, cpu->regs[get_rs1(inst)], 32, res);
-    print_op("amoxor.w\n");
-} 
-void exec_AMOAND_W(CPU* cpu, uint32_t inst) {
-    uint32_t tmp = load_cpu(cpu, cpu->regs[get_rs1(inst)], 32);
-    uint32_t res = tmp & (uint32_t)cpu->regs[get_rs2(inst)];
-    cpu->regs[get_rd(inst)] = tmp;
-    store_cpu(cpu, cpu->regs[get_rs1(inst)], 32, res);
-    print_op("amoand.w\n");
-} 
-void exec_AMOOR_W(CPU* cpu, uint32_t inst) {
-    uint32_t tmp = load_cpu(cpu, cpu->regs[get_rs1(inst)], 32);
-    uint32_t res = tmp | (uint32_t)cpu->regs[get_rs2(inst)];
-    cpu->regs[get_rd(inst)] = tmp;
-    store_cpu(cpu, cpu->regs[get_rs1(inst)], 32, res);
-    print_op("amoor.w\n");
-} 
-void exec_AMOMIN_W(CPU* cpu, uint32_t inst) {} 
-void exec_AMOMAX_W(CPU* cpu, uint32_t inst) {} 
-void exec_AMOMINU_W(CPU* cpu, uint32_t inst) {} 
-void exec_AMOMAXU_W(CPU* cpu, uint32_t inst) {} 
-
-// AMO_D TODO
-void exec_LR_D(CPU* cpu, uint32_t inst) {}  
-void exec_SC_D(CPU* cpu, uint32_t inst) {}  
-void exec_AMOSWAP_D(CPU* cpu, uint32_t inst) {}  
-void exec_AMOADD_D(CPU* cpu, uint32_t inst) {
-    uint32_t tmp = load_cpu(cpu, cpu->regs[get_rs1(inst)], 32);
-    uint32_t res = tmp + (uint32_t)cpu->regs[get_rs2(inst)];
-    cpu->regs[get_rd(inst)] = tmp;
-    store_cpu(cpu, cpu->regs[get_rs1(inst)], 32, res);
-    print_op("amoadd.w\n");
-} 
-void exec_AMOXOR_D(CPU* cpu, uint32_t inst) {
-    uint32_t tmp = load_cpu(cpu, cpu->regs[get_rs1(inst)], 32);
-    uint32_t res = tmp ^ (uint32_t)cpu->regs[get_rs2(inst)];
-    cpu->regs[get_rd(inst)] = tmp;
-    store_cpu(cpu, cpu->regs[get_rs1(inst)], 32, res);
-    print_op("amoxor.w\n");
-} 
-void exec_AMOAND_D(CPU* cpu, uint32_t inst) {
-    uint32_t tmp = load_cpu(cpu, cpu->regs[get_rs1(inst)], 32);
-    uint32_t res = tmp & (uint32_t)cpu->regs[get_rs2(inst)];
-    cpu->regs[get_rd(inst)] = tmp;
-    store_cpu(cpu, cpu->regs[get_rs1(inst)], 32, res);
-    print_op("amoand.w\n");
-} 
-void exec_AMOOR_D(CPU* cpu, uint32_t inst) {
-    uint32_t tmp = load_cpu(cpu, cpu->regs[get_rs1(inst)], 32);
-    uint32_t res = tmp | (uint32_t)cpu->regs[get_rs2(inst)];
-    cpu->regs[get_rd(inst)] = tmp;
-    store_cpu(cpu, cpu->regs[get_rs1(inst)], 32, res);
-    print_op("amoor.w\n");
-} 
-void exec_AMOMIN_D(CPU* cpu, uint32_t inst) {} 
-void exec_AMOMAX_D(CPU* cpu, uint32_t inst) {} 
-void exec_AMOMINU_D(CPU* cpu, uint32_t inst) {} 
-void exec_AMOMAXU_D(CPU* cpu, uint32_t inst) {} 
-
-
-
-int cpu_execute(CPU *cpu, uint32_t inst) {
-	int opcode = inst & 0x7f; // opcode 在位 6..0
-	int funct3 = (inst >> 12) & 0x7; // funct3 在位 14..12
-	int funct7 = (inst >> 25) & 0x7f; // funct7 在位 31..25
-
-	cpu->regs[0] = 0; // x0 硬连接到 0
-
-	printf("%s\n%#.8lx -> %s", ANSI_YELLOW, cpu->pc - 4, ANSI_RESET); // 调试输出
-
-	switch (opcode) {
-		case LUI:   exec_LUI(cpu, inst); break;
-		case AUIPC: exec_AUIPC(cpu, inst); break;
-		case JAL:   exec_JAL(cpu, inst); break;
-		case JALR:  exec_JALR(cpu, inst); break; // 添加 JALR 指令处理
-		case B_TYPE: // 分支指令
-					switch (funct3) {
-						case BEQ:  exec_BEQ(cpu, inst); break;
-						case BNE:  exec_BNE(cpu, inst); break;
-						case BLT:  exec_BLT(cpu, inst); break;
-						case BGE:  exec_BGE(cpu, inst); break;
-						case BLTU: exec_BLTU(cpu, inst); break;
-						case BGEU: exec_BGEU(cpu, inst); break;
-						default:   fprintf(stderr, "未知的分支指令: %x\n", inst); break;
-					}
-					break;
-		case LOAD: // 加载指令
-					switch (funct3) {
-						case LB:   exec_LB(cpu, inst); break;
-						case LH:   exec_LH(cpu, inst); break;
-						case LW:   exec_LW(cpu, inst); break;
-						case LBU:  exec_LBU(cpu, inst); break;
-						case LHU:  exec_LHU(cpu, inst); break;
-						default:   fprintf(stderr, "未知的加载指令: %x\n", inst); break;
-					}
-					break;
-		case S_TYPE: // 存储指令
-					switch (funct3) {
-						case SB:   exec_SB(cpu, inst); break;
-						case SH:   exec_SH(cpu, inst); break;
-						case SW:   exec_SW(cpu, inst); break;
-						default:   fprintf(stderr, "未知的存储指令: %x\n", inst); break;
-					}
-					break;
-		case I_TYPE: // 立即数运算指令
-					switch (funct3) {
-						case ADDI: exec_ADDI(cpu, inst); break;
-						case SLTI: exec_SLTI(cpu, inst); break;
-						case SLTIU:exec_SLTIU(cpu, inst); break;
-						case XORI: exec_XORI(cpu, inst); break;
-						case ORI:  exec_ORI(cpu, inst); break;
-						case ANDI: exec_ANDI(cpu, inst); break;
-						case SLLI: exec_SLLI(cpu, inst); break;
-						//case SRLI: exec_SRLI(cpu, inst); break;
-						case SRAI: exec_SRAI(cpu, inst); break;
-						default:   fprintf(stderr, "未知的立即数运算指令: %x\n", inst); break;
-					}
-					break;
-		case R_TYPE: // 运算指令
-					switch (funct3) {
-						case ADD:
-							if (funct7 == 0) exec_ADD(cpu, inst);
-							else if (funct7 == 0x20) exec_SUB(cpu, inst);
-							break;
-						case SLL: exec_SLL(cpu, inst); break;
-						case SLT: exec_SLT(cpu, inst); break;
-						case SLTU:exec_SLTU(cpu, inst); break;
-						case XOR: exec_XOR(cpu, inst); break;
-						case SR:
-								  if (funct7 == 0x20) exec_SRA(cpu, inst);
-								  else exec_SRL(cpu, inst);
-								  break;
-						case OR:  exec_OR(cpu, inst); break;
-						case AND: exec_AND(cpu, inst); break;
-						default:   fprintf(stderr, "未知的运算指令: %x\n", inst); break;
-					}
-					break;
-
-        case FENCE: exec_FENCE(cpu, inst); break;
-        case I_TYPE_64:
-            switch (funct3) {
-                case ADDIW: exec_ADDIW(cpu, inst); break;
-                case SLLIW: exec_SLLIW(cpu, inst); break;
-                case SRIW : 
-                    switch (funct7) {
-                        case SRLIW: exec_SRLIW(cpu, inst); break;
-                        case SRAIW: exec_SRLIW(cpu, inst); break;
-                    } break;
-            } break;
-
-        case R_TYPE_64:
-            switch (funct3) {
-                case ADDSUB:
-                    switch (funct7) {
-                        case ADDW:  exec_ADDW(cpu, inst); break;
-                        case SUBW:  exec_SUBW(cpu, inst); break;
-                        case MULW:  exec_MULW(cpu, inst); break;
-                    } break;
-                case DIVW:  exec_DIVW(cpu, inst); break;
-                case SLLW:  exec_SLLW(cpu, inst); break;
-                case SRW:
-                    switch (funct7) {
-                        case SRLW:  exec_SRLW(cpu, inst); break;
-                        case SRAW:  exec_SRAW(cpu, inst); break;
-                        case DIVUW: exec_DIVUW(cpu, inst); break;
-                    } break;
-                case REMW:  exec_REMW(cpu, inst); break;
-                case REMUW: exec_REMUW(cpu, inst); break;
-                default: ;
-            } break;
-
-        case CSR:
-            switch (funct3) {
-                case ECALLBREAK:    exec_ECALLBREAK(cpu, inst); break;
-                case CSRRW  :  exec_CSRRW(cpu, inst); break;  
-                case CSRRS  :  exec_CSRRS(cpu, inst); break;  
-                case CSRRC  :  exec_CSRRC(cpu, inst); break;  
-                case CSRRWI :  exec_CSRRWI(cpu, inst); break; 
-                case CSRRSI :  exec_CSRRSI(cpu, inst); break; 
-                case CSRRCI :  exec_CSRRCI(cpu, inst); break; 
-                default:
-                    fprintf(stderr, 
-                            "[-] ERROR-> opcode:0x%x, funct3:0x%x, funct7:0x%x\n"
-                            , opcode, funct3, funct7);
-                    return 0;
-            } break;
-
-        case AMO_W:
-            switch (funct7 >> 2) { // since, funct[1:0] = aq, rl
-                case LR_W      :  exec_LR_W(cpu, inst); break;  
-                case SC_W      :  exec_SC_W(cpu, inst); break;  
-                case AMOSWAP_W :  exec_AMOSWAP_W(cpu, inst); break;  
-                case AMOADD_W  :  exec_AMOADD_W(cpu, inst); break; 
-                case AMOXOR_W  :  exec_AMOXOR_W(cpu, inst); break; 
-                case AMOAND_W  :  exec_AMOAND_W(cpu, inst); break; 
-                case AMOOR_W   :  exec_AMOOR_W(cpu, inst); break; 
-                case AMOMIN_W  :  exec_AMOMIN_W(cpu, inst); break; 
-                case AMOMAX_W  :  exec_AMOMAX_W(cpu, inst); break; 
-                case AMOMINU_W :  exec_AMOMINU_W(cpu, inst); break; 
-                case AMOMAXU_W :  exec_AMOMAXU_W(cpu, inst); break; 
-                default:
-                    fprintf(stderr, 
-                            "[-] ERROR-> opcode:0x%x, funct3:0x%x, funct7:0x%x\n"
-                            , opcode, funct3, funct7);
-                    return 0;
-            } break;
-
-        //case 0x00:
-         //   return 0;
-
-
-		default:
-					fprintf(stderr, "[-] 错误 -> opcode:0x%x, funct3:0x%x, funct7:0x%x\n", opcode, funct3, funct7);
-					return 0;
-	}
-	return 1;
 }
 
 void dump_registers(CPU *cpu) 
@@ -772,7 +165,8 @@ uint64_t csr_read(CPU* cpu, uint64_t csr)
 	return (uint64_t)(uint32_t)cpu->csr[csr];
 }
 
-void csr_write(CPU* cpu, uint64_t csr, uint64_t value) {
+void csr_write(CPU* cpu, uint64_t csr, uint64_t value) 
+{
 	cpu->csr[csr] = value;
 }
 
@@ -785,4 +179,504 @@ void bus_store(BUS* bus, uint64_t addr, uint64_t size, uint64_t value)
 {
 	store(&(bus->dram), addr, size, value);
 }
+
+void set_reg_value_rd(CPU *cpu, uint32_t inst, uint32_t value)
+{
+	cpu->regs[get_rd(inst)] = value;
+}
+
+uint32_t get_reg_value_rs1(CPU *cpu, uint32_t inst)
+{
+	return cpu->regs[get_rs1(inst)];
+}
+
+uint32_t get_reg_value_rs2(CPU *cpu, uint32_t inst)
+{
+
+	return cpu->regs[get_rs2(inst)];
+}
+
+
+uint64_t get_imm_I(uint32_t inst) {
+	return ((int64_t)(int32_t)(inst & 0xfff00000)) >> 20; // Signed immediate
+}
+uint64_t get_imm_S(uint32_t inst) {
+	return ((int64_t)(int32_t)(inst & 0xfe000000) >> 20)
+		| ((inst >> 7) & 0x1f);
+}
+uint64_t get_imm_B(uint32_t inst) {
+	return ((int64_t)(int32_t)(inst & 0x80000000) >> 19)
+		| ((inst & 0x80) << 4) // imm[11]
+		| ((inst >> 20) & 0x7e0) // imm[10:5]
+		| ((inst >> 7) & 0x1e); // imm[4:1]
+}
+
+uint64_t get_imm_U(uint32_t inst) 
+{
+	return (int64_t)(int32_t)(inst & 0xfffff000); // Upper immediate
+}
+
+uint64_t get_imm_J(uint32_t inst) 
+{
+	return (uint64_t)((int64_t)(int32_t)(inst & 0x80000000) >> 11)
+		| (inst & 0xff000) // imm[19:12]
+		| ((inst >> 9) & 0x800) // imm[11]
+		| ((inst >> 20) & 0x7fe); // imm[10:1]
+}
+
+uint32_t get_shamt(uint32_t inst) 
+{
+	return (uint32_t)(get_imm_I(inst) & 0x1f); // Shift amount
+}
+
+uint64_t get_csr(uint32_t inst) 
+{
+	return ((inst & 0xfff00000) >> 20); // CSR
+}
+
+void exec_LUI(CPU* cpu, uint32_t inst) 
+{
+	cpu->regs[get_rd(inst)] = (uint64_t)(int64_t)(int32_t)(inst & 0xfffff000);
+	print_op("lui\n");
+}
+
+void exec_AUIPC(CPU* cpu, uint32_t inst) 
+{
+	uint64_t imm = get_imm_U(inst);
+	cpu->regs[get_rd(inst)] = ((int64_t) cpu->pc + (int64_t) imm) - 4;
+	print_op("auipc\n");
+}
+
+void exec_JAL(CPU* cpu, uint32_t inst) 
+{
+	uint64_t imm = get_imm_J(inst);
+	cpu->regs[get_rd(inst)] = cpu->pc;
+	cpu->pc = cpu->pc + (int64_t) imm - 4;
+	print_op("jal\n");
+	if (ADDR_MISALIGNED(cpu->pc)) {
+		fprintf(stderr, "JAL pc address misaligned");
+		exit(0);
+	}
+}
+
+void exec_JALR(CPU* cpu, uint32_t inst) 
+{
+    uint64_t imm = get_imm_I(inst);
+    uint64_t tmp = cpu->pc;
+    cpu->pc = (get_reg_value_rs1(cpu, inst) + (int64_t) imm) & 0xfffffffe;
+    cpu->regs[get_rd(inst)] = tmp;
+    /*print_op("NEXT -> %#lx, imm:%#lx\n", cpu->pc, imm);*/
+    print_op("jalr\n");
+    if (ADDR_MISALIGNED(cpu->pc)) {
+        fprintf(stderr, "JAL pc address misalligned");
+        exit(0);
+    }
+}
+
+// CSR instructions
+void exec_CSR(CPU* cpu, uint32_t inst, uint32_t funct3, uint32_t imm_I) 
+{
+	switch (funct3) {
+		case ECALLBREAK:    
+			if (imm_I == 0x0)
+				break;
+			if (imm_I == 0x1)
+				break;
+			break;
+		case CSRRW  :  
+    		cpu->regs[get_rd(inst)] = csr_read(cpu, get_csr(inst));
+    		csr_write(cpu, get_csr(inst), cpu->regs[get_rs1(inst)]);
+			break;
+		case CSRRS  :  
+    		csr_write(cpu, get_csr(inst), cpu->csr[get_csr(inst)] | cpu->regs[get_rs1(inst)]);
+			break;
+		case CSRRC  :  
+    		csr_write(cpu, get_csr(inst), cpu->csr[get_csr(inst)] & !(cpu->regs[get_rs1(inst)]) );
+			break;
+		case CSRRWI :  
+    		csr_write(cpu, get_csr(inst), get_rs1(inst));
+			break;
+		case CSRRSI :  
+    		csr_write(cpu, get_csr(inst), cpu->csr[get_csr(inst)] | get_rs1(inst));
+			break;
+		case CSRRCI :   
+    		csr_write(cpu, get_csr(inst), cpu->csr[get_csr(inst)] & !get_rs1(inst));
+			break; 
+		default:
+			return ;
+	}
+}
+
+// AMO_W
+void exec_AMO_W(CPU *cpu, uint32_t inst, uint32_t funct3, uint32_t funct7, uint32_t rs1_value, uint32_t rs2_value)
+{
+	uint32_t tmp = load_cpu(cpu, rs1_value, 32);
+	uint32_t res = 0;
+	switch (funct7 >> 2) { 
+		case LR_W      : 
+		case SC_W      :  
+		case AMOSWAP_W :  
+			break;
+		case AMOADD_W  :  
+			res = tmp + (uint32_t)rs2_value;
+			cpu->regs[get_rd(inst)] = tmp;
+			store_cpu(cpu, rs1_value, 32, res);
+			break; 
+		case AMOXOR_W  : 
+			res = tmp ^ (uint32_t)rs2_value;
+			cpu->regs[get_rd(inst)] = tmp;
+			store_cpu(cpu, rs1_value, 32, res);
+			break;
+		case AMOAND_W  :  
+
+			res = tmp & (uint32_t)rs2_value;
+			cpu->regs[get_rd(inst)] = tmp;
+			store_cpu(cpu, rs1_value, 32, res);
+			break; 
+		case AMOOR_W   :  
+			res = tmp | (uint32_t)rs2_value;
+			cpu->regs[get_rd(inst)] = tmp;
+			store_cpu(cpu, rs1_value, 32, res);
+			break; 
+		case AMOMIN_W  :  
+		case AMOMAX_W  : 
+		case AMOMINU_W :
+		case AMOMAXU_W :
+			break;
+		default:
+			return;
+	}
+}
+
+void exec_I_TYPE(CPU *cpu, uint32_t inst, uint32_t rs1_value, uint32_t funct3,  uint32_t imm_I)
+{
+	uint32_t rd_value = 0;
+
+	switch (funct3) {
+		case ADDI: 
+			rd_value = rs1_value + (int64_t) imm_I; 
+    		printf("ADDI\n");
+			break;
+		case SLTI: 
+    		rd_value = (rs1_value < (int64_t) imm_I)?1:0;
+    		printf("SLTI\n");
+			break;
+		case SLTIU:
+			rd_value = (cpu->regs[get_rs1(inst)] < imm_I)?1:0;
+    		printf("SLTIU\n");
+			break;
+		case XORI: 
+			rd_value = rs1_value ^ imm_I; 
+    		printf("XORI\n");
+			break;
+		case ORI:  
+			rd_value = rs1_value | imm_I;
+    		printf("ORI\n");
+			break;
+		case ANDI: 
+			rd_value = rs1_value & imm_I;
+    		printf("ANDI\n");
+			break;
+		case SLLI: 
+			rd_value = rs1_value << get_shamt(inst); 
+    		printf("SLLI\n");
+			break;
+				   //case SRLI: exec_SRLI(cpu, inst); break;
+		case SRAI: 
+			rd_value = rs1_value >> imm_I;
+    		printf("SRAI\n");
+			break;
+		default:   fprintf(stderr, "未知的立即数运算指令: %x\n", inst); break;
+	}
+
+	set_reg_value_rd(cpu, inst, rd_value);
+}
+
+void exec_I_TYPE64(CPU *cpu, uint32_t inst, uint32_t rs1_value, uint32_t funct3,  uint32_t imm_I, uint32_t funct7 )
+{
+	uint64_t rd_value = 0;
+	switch (funct3) {
+		case ADDIW: 
+			rd_value = rs1_value + (int64_t)imm_I;
+			break;
+		case SLLIW: 
+			rd_value  = (int64_t)rs1_value <<  get_shamt(inst);
+			break;
+		case SRIW : 
+			switch (funct7) {
+				case SRLIW: 
+					rd_value = (int64_t)rs1_value >> get_shamt(inst);
+					break;
+				case SRAIW: 
+					rd_value = (int64_t)rs1_value >> imm_I;
+					break;
+			} break;
+	}
+	set_reg_value_rd(cpu, inst, rd_value);
+}
+
+void exec_B_TYPE(CPU *cpu, uint32_t inst, uint32_t rs1_value, uint32_t rs2_value, uint64_t imm_B, uint32_t funct3)
+{
+	switch (funct3) {
+		case BEQ:
+			if (rs1_value == rs2_value) {
+				cpu->pc = cpu->pc + imm_B - 4;
+			}	
+			printf("BEQ\n");
+			break;
+		case BNE:  
+			if (rs1_value != rs2_value) {
+				cpu->pc = cpu->pc + imm_B - 4;
+			}
+			printf("BNE\n");
+			break;
+
+		case BLT:  
+			if (rs1_value < rs2_value) {
+				cpu->pc = cpu->pc + imm_B - 4;
+			}
+			printf("BLT\n");
+			break;
+
+		case BGE:  
+			if (rs1_value >= rs2_value) {
+				cpu->pc = cpu->pc + imm_B - 4;
+			}
+			printf("BGE\n");
+			break;
+		case BLTU: 
+			if (rs1_value < rs2_value) {
+				cpu->pc = cpu->pc + (int64_t) imm_B - 4;
+			}
+			printf("BLTU\n");
+			break;
+		case BGEU: 
+			if (rs1_value >= rs2_value) {
+				cpu->pc = cpu->pc + (int64_t) imm_B - 4;
+			}
+			printf("BGEU\n");
+		default:   fprintf(stderr, "未知的分支指令: %x\n", inst); break;
+	}
+}
+
+void exec_S_TYPE(CPU *cpu, uint32_t inst, uint32_t rs1_value,  uint32_t rs2_value, uint64_t imm_S, uint32_t funct3)
+{
+	uint64_t addr = 0;
+	int length = 0;
+    addr = rs1_value + (int64_t) imm_S;
+
+	switch (funct3) {
+		case SB:   
+			length = 8;
+			break;
+
+		case SH:   
+			length = 16;
+			break;
+
+		case SW:   
+			length = 32;
+		default:   fprintf(stderr, "未知的存储指令: %x\n", inst); break;
+	}
+    store_cpu(cpu, addr, length, rs2_value);
+}
+
+void exec_LOAD(CPU *cpu, uint32_t inst, uint32_t rs1_value, uint32_t imm_I, uint32_t funct3)
+{
+	uint32_t rd_value = 0;
+	switch (funct3) {
+		case LB:   
+			rd_value = load_cpu(cpu, rs1_value + (int64_t ) imm_I, 8);
+			break;
+		case LH:   
+			rd_value = load_cpu(cpu, rs1_value + (int64_t ) imm_I, 16);
+			break;
+		case LW:   
+			rd_value = load_cpu(cpu, rs1_value + (int64_t ) imm_I, 32);
+			break;
+		case LBU:  
+			rd_value = load_cpu(cpu, rs1_value + (uint64_t ) imm_I, 8);
+			break;
+		case LHU: 
+			rd_value = load_cpu(cpu, rs1_value + (uint64_t ) imm_I, 16);
+			break;
+		default:   fprintf(stderr, "未知的加载指令: %x\n", inst); break;
+	}
+	set_reg_value_rd(cpu, inst, rd_value);
+}
+
+void exec_R_TYPE(CPU *cpu, uint32_t inst, uint32_t rs1_value, uint32_t rs2_value, uint32_t funct3, uint32_t funct7)
+{
+	uint32_t rd_value = 0;
+	switch (funct3) {
+		case ADD:
+			if (funct7 == 0) {
+				rd_value = rs1_value + rs2_value;
+			} else if (funct7 == 0x20) {
+				rd_value = rs1_value - rs2_value;
+			}
+			break;
+
+		case SLL: 
+			rd_value = rs1_value << rs2_value;
+			break;
+
+		case SLT: 
+			rd_value = rs1_value < (int64_t)rs2_value ? 1:0;
+			break;
+
+		case SLTU:
+			rd_value = rs1_value < rs2_value ? 1:0;
+			break;
+
+		case XOR: 
+			rd_value = rs1_value ^ rs2_value;
+			break;
+
+		case SR:
+			if (funct7 == 0x20) {
+				// SRA
+				rd_value = (int32_t)rs1_value >> rs2_value;
+			} else {
+			 	// SRL
+			 	rd_value = rs1_value >> rs2_value;
+			}
+			break;
+
+		case OR:  
+			rd_value = rs1_value | rs2_value;
+			break;
+
+		case AND: 
+			rd_value = rs1_value & rs2_value;
+			break;
+
+		default:   fprintf(stderr, "未知的运算指令: %x\n", inst); break;
+	}
+
+	set_reg_value_rd(cpu, inst, rd_value);
+}
+
+void exec_R_TYPE64(CPU *cpu, uint32_t inst, uint32_t rs1_value, uint32_t rs2_value, uint32_t funct3, uint32_t funct7)
+{
+	uint64_t rd_value = 0;
+	switch (funct3) {
+		case ADDSUB:
+			switch (funct7) {
+				case ADDW:  
+					rd_value = rs1_value + rs2_value;
+					break;
+				case SUBW: 
+					rd_value = rs1_value - rs2_value;
+					break;
+				case MULW:  
+					rd_value = rs1_value * rs2_value;
+					break;
+			} break;
+		case DIVW:  
+			rd_value = rs1_value / rs2_value;
+			break;
+		case SLLW:  
+			rd_value = rs1_value << rs2_value;
+			break;
+		case SRW:
+					switch (funct7) {
+						case SRLW:  
+							rd_value = rs1_value >> rs2_value;
+							break;
+						case SRAW:  
+							rd_value = rs1_value >> rs2_value;
+							break;
+						case DIVUW: 
+							rd_value = rs1_value / rs2_value;
+							break;
+					} break;
+		case REMW:  
+			rd_value = rs1_value % rs2_value;
+			break;
+		case REMUW: 
+			rd_value = rs1_value % rs2_value;
+			break;
+		default: ;
+	}
+	set_reg_value_rd(cpu, inst, rd_value);
+}
+
+int cpu_execute(CPU *cpu, uint32_t inst) 
+{
+	int opcode = inst & 0x7f; // opcode 在位 6..0
+	int funct3 = (inst >> 12) & 0x7; // funct3 在位 14..12
+	int funct7 = (inst >> 25) & 0x7f; // funct7 在位 31..25
+
+	cpu->regs[0] = 0; // x0 硬连接到 0
+
+	printf("%s\n%#.8lx -> %s", ANSI_YELLOW, cpu->pc - 4, ANSI_RESET); // 调试输出
+
+	switch (opcode) {
+		case LUI:   
+			exec_LUI(cpu, inst); 
+			break;
+
+		case AUIPC: 
+			exec_AUIPC(cpu, inst); 
+			break;
+
+		case JAL:   
+			exec_JAL(cpu, inst); 
+			break;
+
+		case JALR:  
+			exec_JALR(cpu, inst); 
+			break; // 添加 JALR 指令处理
+
+		case B_TYPE: // 分支指令
+			exec_B_TYPE(cpu, inst, get_reg_value_rs1(cpu, inst), get_reg_value_rs2(cpu, inst), get_imm_B(inst), funct3);
+			break;
+
+		case LOAD: // 加载指令
+			exec_LOAD(cpu, inst, get_reg_value_rs1(cpu, inst), get_imm_I(inst), funct3);
+			break;
+
+		case S_TYPE: // 存储指令
+			exec_S_TYPE(cpu, inst, get_reg_value_rs1(cpu, inst),  get_reg_value_rs2(cpu, inst), get_imm_S(inst), funct3);
+			break;
+
+		case I_TYPE: // 立即数运算指令
+			exec_I_TYPE(cpu, inst, get_reg_value_rs1(cpu, inst), funct3,  get_imm_I(inst));
+			break;
+
+		case R_TYPE: // 运算指令
+			exec_R_TYPE(cpu, inst, get_reg_value_rs1(cpu, inst), get_reg_value_rs2(cpu, inst), funct3,  funct7);
+			break;
+
+        case FENCE: 
+			break;
+
+        case I_TYPE_64:
+			exec_I_TYPE64(cpu, inst, get_reg_value_rs1(cpu, inst), funct3,  get_imm_I(inst), funct7);
+			break;
+
+        case R_TYPE_64:
+			exec_R_TYPE64(cpu, inst, get_reg_value_rs1(cpu, inst), get_reg_value_rs2(cpu, inst), funct3,  funct7);
+            break;
+
+        case CSR:
+			exec_CSR(cpu, inst, funct3, get_imm_I(inst)); 
+            break;
+
+        case AMO_W:
+			exec_AMO_W(cpu, inst, funct3, funct7, get_reg_value_rs1(cpu, inst), get_reg_value_rs2(cpu, inst));
+            break;
+
+        //case 0x00:
+         //   return 0;
+
+
+		default:
+			fprintf(stderr, "[-] 错误 -> opcode:0x%x, funct3:0x%x, funct7:0x%x\n", opcode, funct3, funct7);
+			return 0;
+	}
+	return 1;
+}
+
 
