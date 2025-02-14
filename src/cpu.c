@@ -11,6 +11,145 @@
 
 #define ADDR_MISALIGNED(addr) (addr & 0x3)
 
+#include <stdio.h>
+#include <stdint.h>
+
+// 掩码和位移常量
+#define OPCODE_MASK 0x7F
+#define FUNCT3_MASK 0x7000
+#define FUNCT7_MASK 0xFE000000
+#define RS1_MASK    0xF8000
+#define RS2_MASK    0x1F00000
+#define RD_MASK     0xF80
+
+// 提取字段的宏
+#define GET_OPCODE(inst) ((inst) & OPCODE_MASK)
+#define GET_FUNCT3(inst) (((inst) & FUNCT3_MASK) >> 12)
+#define GET_FUNCT7(inst) (((inst) & FUNCT7_MASK) >> 25)
+
+// 定义操作码常量
+enum OPCODES {
+	STORE   = 0x23,
+	BRANCH  = 0x63,
+	OP_IMM  = 0x13,
+	OP      = 0x33,
+	SYSTEM  = 0x73
+};
+
+// 打印指令类型和具体指令的函数
+void dump_instruction(uint32_t inst) 
+{
+	uint32_t opcode = GET_OPCODE(inst);
+	uint32_t funct3 = GET_FUNCT3(inst);
+	uint32_t funct7 = GET_FUNCT7(inst);
+
+	switch (opcode) {
+		case LOAD:
+			printf("I-type (Load Instruction): ");
+			switch (funct3) {
+				case 0x0: printf("LB\n"); break;
+				case 0x1: printf("LH\n"); break;
+				case 0x2: printf("LW\n"); break;
+				case 0x4: printf("LBU\n"); break;
+				case 0x5: printf("LHU\n"); break;
+				default: printf("Unknown Load Instruction\n"); break;
+			}
+			break;
+		case STORE:
+			printf("S-type (Store Instruction): ");
+			switch (funct3) {
+				case 0x0: printf("SB\n"); break;
+				case 0x1: printf("SH\n"); break;
+				case 0x2: printf("SW\n"); break;
+				default: printf("Unknown Store Instruction\n"); break;
+			}
+			break;
+		case BRANCH:
+			printf("B-type (Branch Instruction): ");
+			switch (funct3) {
+				case 0x0: printf("BEQ\n"); break;
+				case 0x1: printf("BNE\n"); break;
+				case 0x4: printf("BLT\n"); break;
+				case 0x5: printf("BGE\n"); break;
+				case 0x6: printf("BLTU\n"); break;
+				case 0x7: printf("BGEU\n"); break;
+				default: printf("Unknown Branch Instruction\n"); break;
+			}
+			break;
+		case JALR:
+			printf("I-type (JALR Instruction)\n");
+			break;
+		case JAL:
+			printf("J-type (JAL Instruction)\n");
+			break;
+		case LUI:
+			printf("U-type (LUI Instruction)\n");
+			break;
+		case AUIPC:
+			printf("U-type (AUIPC Instruction)\n");
+			break;
+		case OP_IMM:
+			printf("I-type (Arithmetic Immediate Instruction): ");
+			switch (funct3) {
+				case 0x0: printf("ADDI\n"); break;
+				case 0x2: printf("SLTI\n"); break;
+				case 0x3: printf("SLTIU\n"); break;
+				case 0x4: printf("XORI\n"); break;
+				case 0x6: printf("ORI\n"); break;
+				case 0x7: printf("ANDI\n"); break;
+				case 0x1: printf("SLLI\n"); break;
+				case 0x5:
+						  if (funct7 == 0x00) {
+							  printf("SRLI\n");
+						  } else if (funct7 == 0x20) {
+							  printf("SRAI\n");
+						  } else {
+							  printf("Unknown Shift Immediate Instruction\n");
+						  }
+						  break;
+				default: printf("Unknown Immediate Instruction\n"); break;
+			}
+			break;
+		case OP:
+			printf("R-type (Register Instruction): ");
+			switch (funct3) {
+				case 0x0:
+					if (funct7 == 0x00) {
+						printf("ADD\n");
+					} else if (funct7 == 0x20) {
+						printf("SUB\n");
+					} else {
+						printf("Unknown ADD/SUB Instruction\n");
+					}
+					break;
+				case 0x1: printf("SLL\n"); break;
+				case 0x2: printf("SLT\n"); break;
+				case 0x3: printf("SLTU\n"); break;
+				case 0x4: printf("XOR\n"); break;
+				case 0x5:
+						  if (funct7 == 0x00) {
+							  printf("SRL\n");
+						  } else if (funct7 == 0x20) {
+							  printf("SRA\n");
+						  } else {
+							  printf("Unknown Shift Instruction\n");
+						  }
+						  break;
+				case 0x6: printf("OR\n"); break;
+				case 0x7: printf("AND\n"); break;
+				default: printf("Unknown Register Instruction\n"); break;
+			}
+			break;
+		case SYSTEM:
+			printf("I-type (System Instruction)\n");
+			break;
+		default:
+			printf("Unknown Instruction\n");
+			break;
+	}
+}
+
+
 uint64_t load8(DRAM* dram, uint64_t addr) 
 {
 	return (uint64_t) dram->mem[addr - DRAM_BASE];
@@ -565,9 +704,11 @@ void exec_R_TYPE64(CPU *cpu, uint32_t inst, uint32_t rs1_value, uint32_t rs2_val
 			switch (funct7) {
 				case ADDW:  
 					rd_value = rs1_value + rs2_value;
+					printf("ADDW\n");
 					break;
 				case SUBW: 
 					rd_value = rs1_value - rs2_value;
+					printf("SUBW\n");
 					break;
 				case MULW:  
 					rd_value = rs1_value * rs2_value;
@@ -610,7 +751,8 @@ int cpu_execute(CPU *cpu, uint32_t inst)
 
 	cpu->regs[0] = 0; // x0 硬连接到 0
 
-	printf("%s\n%#.8lx -> %s", ANSI_YELLOW, cpu->pc - 4, ANSI_RESET); // 调试输出
+	printf("# cpu execute inst: %x, opcode: %x\n", inst, opcode); // 调试输出
+	dump_instruction(inst); 
 
 	switch (opcode) {
 		case LUI:   
