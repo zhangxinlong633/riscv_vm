@@ -33,7 +33,7 @@
 #define FALSE 0
 
 #define DRAM_SIZE 1024*1024*1
-#define DRAM_BASE 0x80000000
+#define DRAM_BASE 0x80000000ULL
 
 typedef struct DRAM {
 	uint8_t mem[DRAM_SIZE];     // Dram memory of DRAM_SIZE
@@ -42,6 +42,10 @@ typedef struct DRAM {
 uint64_t dram_load(DRAM* dram, uint64_t addr, uint64_t size);
 
 void dram_store(DRAM* dram, uint64_t addr, uint64_t size, uint64_t value);
+
+uint64_t load(DRAM* dram, uint64_t addr, uint64_t size);
+
+void store(DRAM* dram, uint64_t addr, uint64_t size, uint64_t value);
 
 
 typedef struct BUS {
@@ -61,7 +65,11 @@ typedef struct CPU {
 void cpu_init(struct CPU *cpu);
 uint32_t cpu_fetch(struct CPU *cpu);
 int cpu_execute(struct CPU *cpu, uint32_t inst);
+int execute_compressed(struct CPU *cpu, uint16_t inst);
 void dump_registers(struct CPU *cpu); 
+void dump_instruction(uint32_t inst);
+void debug_print(const char* format, ...);
+void dump_memory(DRAM* dram, uint64_t addr, uint64_t size);
 
 //      Name        Number   Priv       Description
 //------------------------------------------------------------------------------------
@@ -97,7 +105,7 @@ void dump_registers(struct CPU *cpu);
 #define HPMCOUNTER3H 0xC83 // URO Upper 32 bits of hpmcounter3, RV32I only.
 #define HPMCOUNTER4H 0xC84 // URO Upper 32 bits of hpmcounter4, RV32I only.
 // ... hpm counter 4-31 (TODO)
-#define HPMCOUNTER31H 0xC9F URO 
+#define HPMCOUNTER31H 0xC9F // URO Upper 32 bits of hpmcounter31, RV32I only.
 
 
 //Supervisor Trap Setup
@@ -195,7 +203,7 @@ void csr_write(CPU* cpu, uint64_t csr, uint64_t value);
 #define JAL     0x6f 
 #define JALR    0x67 
 
-#define B_TYPE  0x63
+#define BRANCH  0x63
     #define BEQ     0x0
     #define BNE     0x1
     #define BLT     0x4
@@ -212,13 +220,13 @@ void csr_write(CPU* cpu, uint64_t csr, uint64_t value);
     #define LHU     0x5
     #define LWU     0x6
 
-#define S_TYPE  0x23
+#define STORE   0x23
     #define SB      0x0
     #define SH      0x1
     #define SW      0x2
     #define SD      0x3
 
-#define I_TYPE  0x13
+#define OP_IMM  0x13
     #define ADDI    0x0
     #define SLLI    0x1
     #define SLTI    0x2
@@ -230,10 +238,11 @@ void csr_write(CPU* cpu, uint64_t csr, uint64_t value);
     #define ORI     0x6
     #define ANDI    0x7
 
-#define R_TYPE  0x33
+#define OP      0x33
     #define ADDSUB  0x0
         #define ADD     0x00
         #define SUB     0x20
+        #define MUL     0x01
     #define SLL     0x1
     #define SLT     0x2
     #define SLTU    0x3
@@ -241,19 +250,23 @@ void csr_write(CPU* cpu, uint64_t csr, uint64_t value);
     #define SR      0x5
         #define SRL     0x00
         #define SRA     0x20
+        #define DIVU    0x01
     #define OR      0x6
     #define AND     0x7
+    #define DIV     0x04  // funct3=0x4, funct7=0x01 for DIV
+    #define REM     0x06  // funct3=0x6 for REM
+    #define REMU    0x07  // funct3=0x7 for REMU
 
 #define FENCE   0x0f
 
-#define I_TYPE_64 0x1b
+#define OP_IMM_32 0x1b
     #define ADDIW   0x0
     #define SLLIW   0x1
     #define SRIW    0x5
         #define SRLIW   0x00
         #define SRAIW   0x20
 
-#define R_TYPE_64 0x3b
+#define OP_32    0x3b
     #define ADDSUB   0x0
         #define ADDW    0x00
         #define MULW    0x01
@@ -267,7 +280,7 @@ void csr_write(CPU* cpu, uint64_t csr, uint64_t value);
     #define REMW    0x6
     #define REMUW   0x7
 
-#define CSR 0x73
+#define SYSTEM  0x73
     #define ECALLBREAK    0x00     // contains both ECALL and EBREAK
     #define CSRRW   0x01
     #define CSRRS   0x02
@@ -276,7 +289,7 @@ void csr_write(CPU* cpu, uint64_t csr, uint64_t value);
     #define CSRRSI  0x06
     #define CSRRCI  0x07
 
-#define AMO_W 0x2f
+#define AMO     0x2f
     #define LR_W        0x02
     #define SC_W        0x03
     #define AMOSWAP_W   0x01

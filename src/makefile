@@ -1,37 +1,48 @@
-# Makefile (BSD style)
-
-# 指定编译器
-CC = gcc
-
-# 编译选项
-CFLAGS = -Wall -g
-
-# 源文件
-SOURCES = riscv_vm.c cpu.c
+# RISC-V Virtual Machine Makefile
+# 用于构建 RISC-V 64位虚拟机
 
 # 目标文件
-OBJECTS = riscv_vm.o cpu.o
+RISCV_VM = riscv_vm
 
-# 可执行文件名
-TARGET = riscv_vm
+# 编译器设置
+CC = gcc
+CFLAGS = -Wall -Wextra -std=c99 -g -O2
+LDFLAGS = -lm
 
 # 默认目标
-all: $(TARGET)
+all: $(RISCV_VM)
 
-# 链接目标文件生成可执行文件
-$(TARGET): $(OBJECTS)
-	$(CC) -o $@ $(OBJECTS)
+# 构建主虚拟机
+$(RISCV_VM): riscv_vm.c cpu.c
+	@echo "构建 RISC-V 虚拟机..."
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+	@echo "构建完成: $@"
 
-# 编译每个源文件为目标文件
-riscv_vm.o: riscv_vm.c
-	$(CC) $(CFLAGS) -c $< -o $@
+# 运行测试
+test: $(RISCV_VM)
+	@echo "运行 RISC-V 指令集测试..."
+	@cd ../test && ./test_rv32i.sh && ./test_rv64i.sh
 
-cpu.o: cpu.c
-	$(CC) $(CFLAGS) -c $< -o $@
-
-# 清理生成的文件
+# 清理构建文件
 clean:
-	rm -f $(OBJECTS) $(TARGET)
+	@echo "清理构建文件..."
+	rm -f $(RISCV_VM)
+	rm -f *.o
+	@echo "清理完成"
 
-.PHONY: all clean
+# 显示帮助
+help:
+	@echo "=== RISC-V Virtual Machine Makefile 帮助 ==="
+	@echo ""
+	@echo "可用目标:"
+	@echo "  all   - 构建 RISC-V 虚拟机 (默认)"
+	@echo "  test  - 运行指令集测试"
+	@echo "  clean - 清理构建文件"
+	@echo "  help  - 显示此帮助"
+	@echo ""
+	@echo "使用示例:"
+	@echo "  make      - 构建虚拟机"
+	@echo "  make test - 运行测试"
+	@echo "  make clean- 清理构建文件"
 
+.PHONY: all test clean help
